@@ -1,6 +1,7 @@
 # Part 1. Introduction to React
 
- 
+> Source: [Full Stack Open 2021 Part 1](https://fullstackopen.com/en/part1)
+
 ## **a. Introduction to React**
 
 The easiest way to get started by far is by using a tool called create-react-app.
