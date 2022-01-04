@@ -188,3 +188,1165 @@ const App = ({ notes }) => {
 The filename extension `.js` can be omitted.
 
 ## [When the Application Breaks](https://fullstackopen.com/en/part2/rendering_a_collection_modules#when-the-application-breaks)
+
+## **b. Forms**
+
+In order to get our page to update when new notes are added it's best to store the notes in the *App* component's state. Let's import the useState function and use it to define a piece of state that gets initialized with the initial notes array passed in the props.
+
+```javascript
+import React, { useState } from 'react'
+import Note from './components/Note'
+
+const App = (props) => {
+  const [notes, setNotes] = useState(props.notes)
+
+  return (
+    <div>
+      <h1>Notes</h1>
+      <ul>
+        {notes.map(note => 
+          <Note key={note.id} note={note} />
+        )}
+      </ul>
+    </div>
+  )
+}
+
+export default App 
+```
+
+The component uses the `useState` function to initialize the piece of state stored in `notes` with the array of notes passed in the props.
+
+If we wanted to start with an empty list of notes we would set the initial value as an empty array, and since the props would not be used, we could omit the `props` parameter from the function definition:
+
+```javascript
+const App = () => { 
+  const [notes, setNotes] = useState([]) 
+
+  // ...
+}  
+```
+
+Next, let's add an HTML form to the component that will be used for adding new notes.
+
+```javascript
+const App = (props) => {
+  const [notes, setNotes] = useState(props.notes)
+
+  const addNote = (event) => {
+    event.preventDefault()
+    console.log('button clicked', event.target)
+  }
+
+  return (
+    <div>
+      <h1>Notes</h1>
+      <ul>
+        {notes.map(note => 
+          <Note key={note.id} note={note} />
+        )}
+      </ul>
+      <form onSubmit={addNote}>
+        <input />
+        <button type="submit">save</button>
+      </form>   
+    </div>
+  )
+}
+```
+
+We have added the `addNote` function as an event handler to the form element that will be called when the form is submitted, by clicking the submit button.
+
+The `event` parameter is the event that triggers the call to the event handler function:
+
+The event handler immediately calls the `event.preventDefault()` method, which prevents the default action of submitting a form. The default action would, [among other things](https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/submit_event), cause the page to reload.
+
+The target of the event stored in `event.target` is logged to the console:
+
+![](https://fullstackopen.com/static/74fb6fa76af47ec0301ec15163cf74e8/5a190/6e.png)
+
+⭐ How do we access the data contained in the form's *input* element?
+
+There are many ways to accomplish this; the first method we will take a look at is through the use of so-called [controlled components](https://reactjs.org/docs/forms.html#controlled-components).
+
+Let's add a new piece of state called `newNote` for storing the user-submitted input and let's set it as the *input* element's *value* attribute:
+
+```javascript
+const App = (props) => {
+  //...
+  const [newNote, setNewNote] = useState(
+    'a new note...'
+  ) 
+
+  //...
+
+  return (
+    <div>
+      <h1>Notes</h1>
+      <ul>
+        {notes.map(note => 
+          <Note key={note.id} note={note} />
+        )}
+      </ul>
+      <form onSubmit={addNote}>
+        <input value={newNote} />
+        <button type="submit">save</button>
+      </form>   
+    </div>
+  )
+}
+```
+
+The placeholder text stored as the initial value of the `newNote` state appears in the *input* element, but the input text can't be edited. The console displays a warning that gives us a clue as to what might be wrong:
+
+![](https://fullstackopen.com/static/2905b1f4edfe786a70566fe4a7a3a0e9/5a190/7e.png)
+
+Since we assigned a piece of the *App* component's state as the *value* attribute of the input element, the *App* component now controls the behavior of the input element.
+
+In order to enable editing of the input element, we have to register an *event handler* that synchronizes the changes made to the input with the component's state:
+
+```javascript
+const App = (props) => {
+  const [notes, setNotes] = useState(props.notes)
+  const [newNote, setNewNote] = useState(
+    'a new note...'
+  ) 
+
+  // ...
+
+  const handleNoteChange = (event) => {
+    console.log(event.target.value)
+    setNewNote(event.target.value)
+  }
+
+  return (
+    <div>
+
+      ...
+
+      <form onSubmit={addNote}>
+        <input
+          value={newNote}
+          onChange={handleNoteChange}
+        />
+        <button type="submit">save</button>
+      </form>   
+    </div>
+  )
+}
+```
+
+The event handler is called every time a *change* occurs in the *input* element. The event handler function receives the event object as its `event` parameter.
+
+The target property of the event object now corresponds to the controlled input element and event.target.value refers to the input value of that element.
+
+Note that we did not need to call the `event.preventDefault()` method like we did in the onSubmit event handler. This is because there is no default action that occurs on an input change, unlike on a form submission.
+
+![](https://fullstackopen.com/static/a8548b60018e45a30412b33bf4a76c62/5a190/8e.png)
+
+Now the *App* component's `newNote` state reflects the current value of the input, which means that we can complete the `addNote` function for creating new notes:
+
+```javascript
+const addNote = (event) => {
+  event.preventDefault()
+  const noteObject = {
+    content: newNote,
+    date: new Date().toISOString(),
+    important: Math.random() < 0.5,
+    id: notes.length + 1,
+  }
+
+  setNotes(notes.concat(noteObject))
+  setNewNote('')
+}
+```
+
+```
+setNotes(notes.concat(noteObject))
+```
+
+The method does not mutate the original `notes` array, but rather creates *a new copy* of the array with the new item added to the end. This is important since we must [never mutate state](https://reactjs.org/docs/state-and-lifecycle.html#using-state-correctly) directly in React!
+
+## Filtering Displayed Elements
+
+Let's add a piece of state to the App component that keeps track of which notes should be displayed:
+
+```javascript
+const App = (props) => {
+  const [notes, setNotes] = useState(props.notes) 
+  const [newNote, setNewNote] = useState('')
+  const [showAll, setShowAll] = useState(true)
+  
+  // ...
+}
+```
+
+Let's change the component so that it stores a list of all the notes to be displayed in the `notesToShow` variable. The items of the list depend on the state of the component:
+
+```javascript
+
+  // ...
+
+  const notesToShow = showAll
+    ? notes
+    : notes.filter(note => note.important === true)
+
+  return (
+    <div>
+      <h1>Notes</h1>
+      <ul>
+        {notesToShow.map(note =>
+          <Note key={note.id} note={note} />
+        )}
+      </ul>
+      // ...
+    </div>
+  )
+}
+```
+
+The definition uses the [conditional](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_Operator) operator also found in many other programming languages.
+
+Next let's add functionality that enables users to toggle the showAll state of the application from the user interface.
+
+The relevant changes are shown below:
+
+```javascript
+import React, { useState } from 'react' 
+import Note from './components/Note'
+
+const App = (props) => {
+  const [notes, setNotes] = useState(props.notes) 
+  const [newNote, setNewNote] = useState('')
+  const [showAll, setShowAll] = useState(true)
+
+  // ...
+
+  return (
+    <div>
+      <h1>Notes</h1>
+      <div>
+        <button onClick={() => setShowAll(!showAll)}>
+          show {showAll ? 'important' : 'all' }
+        </button>
+      </div>
+      <ul>
+        {notesToShow.map(note =>
+          <Note key={note.id} note={note} />
+        )}
+      </ul>
+      // ...    
+    </div>
+  )
+}
+```
+
+## **c. Getting data from server**
+
+Let's use a tool meant to be used during software development called [JSON Server](https://github.com/typicode/json-server) to act as our server.
+
+Create a file named *db.json* in the root directory of the project with the following content:
+
+```json
+{
+  "notes": [
+    {
+      "id": 1,
+      "content": "HTML is easy",
+      "date": "2019-05-30T17:30:31.098Z",
+      "important": true
+    },
+    {
+      "id": 2,
+      "content": "Browser can execute only JavaScript",
+      "date": "2019-05-30T18:39:34.091Z",
+      "important": false
+    },
+    {
+      "id": 3,
+      "content": "GET and POST are the most important methods of HTTP protocol",
+      "date": "2019-05-30T19:20:14.298Z",
+      "important": true
+    }
+  ]
+}
+```
+
+You can [install](https://github.com/typicode/json-server#getting-started) JSON server globally on your machine using the command `npm install -g json-server`. A global installation requires administrative privileges, which means that it is not possible on the faculty computers or freshman laptops.
+
+However, a global installation is not necessary. From the root directory of your app, we can run the json-server using the command `npx`:
+
+```shell
+$ npx json-server --port 3001 --watch db.json
+```
+
+The *json-server* starts running on port 3000 by default; but since projects created using create-react-app reserve port 3000, we must define an alternate port, such as port 3001, for the json-server.
+
+Let's navigate to the address http://localhost:3001/notes in the browser. We can see that *json-server* serves the notes we previously wrote to the file in JSON format:
+
+![](https://fullstackopen.com/static/37694498d0930f7b32df06ee8de181e6/5a190/14e.png)
+
+## The browser as a runtime environment
+
+Our first task is fetching the already existing notes to our React application from the address http://localhost:3001/notes.
+
+The use of [XMLHttpRequest](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) is no longer recommended, and browsers already widely support the fetch method, which is based on so-called [promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise), instead of the event-driven model used by XHR.
+
+Data was fetched using XHR in the following way:
+
+```javascript
+const xhttp = new XMLHttpRequest()
+
+xhttp.onreadystatechange = function() {
+  if (this.readyState == 4 && this.status == 200) {
+    const data = JSON.parse(this.responseText)
+    // handle the response that is saved in variable data
+  }
+}
+
+xhttp.open('GET', '/data.json', true)
+xhttp.send()
+```
+
+It is worth noting that the code in the event handler is defined before the request is sent to the server. Despite this, the code within the event handler will be executed at a later point in time. Therefore, the code does not execute synchronously "from top to bottom", but does so *asynchronously*. JavaScript calls the event handler that was registered for the request at some point.
+
+A synchronous way of making requests that's common in Java programming, for instance, would play out as follows (❗ this is not actually working Java code):
+
+```java
+HTTPRequest request = new HTTPRequest();
+
+String url = "https://fullstack-exampleapp.herokuapp.com/data.json";
+List<Note> notes = request.get(url);
+
+notes.forEach(m => {
+  System.out.println(m.content);
+});
+```
+
+In Java the code executes line by line and stops to wait for the HTTP request, which means waiting for the command `request.get(...)` to finish.
+
+On the other hand, JavaScript engines, or runtime environments, follow the [asynchronous model](https://developer.mozilla.org/en-US/docs/Web/JavaScript/EventLoop). In principle, this requires all [IO-operations](https://en.wikipedia.org/wiki/Input/output) (with some exceptions) to be executed as non-blocking. This means that the code execution continues immediately after calling an IO function, without waiting for it to return.
+
+When an asynchronous operation is completed, or more specifically, at some point after its completion, the JavaScript engine calls the event handlers registered to the operation.
+
+Currently, JavaScript engines are *single-threaded*, which means that they cannot execute code in parallel. As a result, it is a requirement in practice to use a non-blocking model for executing IO operations. Otherwise, the browser would "freeze" during, for instance, the fetching of data from a server.
+
+For the browser to remain *responsive*, i.e. to be able to continuously react to user operations with sufficient speed, the code logic needs to be such that no single computation can take too long.
+
+There is a host of additional material on the subject to be found on the internet. One particularly clear presentation of the topic is the keynote by Philip Roberts called [What the heck is the event loop anyway?](https://www.youtube.com/watch?v=8aGhZQkoFbQ)
+
+In today's browsers, it is possible to run parallelized code with the help of so-called [web workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers). The event loop of an individual browser window is, however, still only handled by a [single thread](https://medium.com/techtrument/multithreading-javascript-46156179cf9a).
+
+## npm
+
+Let's get back to the topic of fetching data from the server.
+
+We could use the previously mentioned promise based function [fetch](https://developer.mozilla.org/en-US/docs/Web/API/fetch) to pull the data from the server.
+
+That being said, we will be using the [axios](https://github.com/axios/axios) library instead for communication between the browser and server. It functions like fetch, but is somewhat more pleasant to use. Another good reason to use axios is our getting familiar with adding external libraries, so-called *npm packages*, to React projects.
+
+⭐ A clear indicator that a project uses npm is the *package.json* file located at the root of the project:
+
+We now want to use axios. Theoretically, we could define the library directly in the *package.json* file, but it is better to install it from the command line.
+
+```shell
+$ npm install axios
+```
+
+❗ `npm`-commands should always be run in the project root directory, which is where the package.json file can be found.
+
+Let's make another addition. Install *json-server* as a development dependency (only used during development) by executing the command:
+
+```shell
+$ npm install json-server --save-dev
+```
+
+and making a small addition to the *scripts* part of the *package.json* file:
+
+```json
+"server": "json-server -p3001 --watch db.json"
+```
+
+We can now conveniently, without parameter definitions, start the json-server from the project root directory with the command:
+
+```shell
+$ npm run server
+```
+
+❗ The previously started json-server must be terminated before starting a new one, otherwise there will be trouble:
+
+## Axios and promises
+
+❗ To run json-server and your react app simultaneously, you may need to use two terminal windows. One to keep json-server running and the other to run react-app.
+
+Add the following to the file *index.js*:
+
+```javascript
+import axios from 'axios'
+
+const promise = axios.get('http://localhost:3001/notes')
+console.log(promise)
+
+const promise2 = axios.get('http://localhost:3001/foobar')
+console.log(promise2)
+```
+
+If you open http://localhost:3000 in the browser, this should be printed to the console
+
+![](https://fullstackopen.com/static/823a2e7f414c99cb849a42470e4f372d/5a190/16b.png)
+
+Axios' method `get` returns a [promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises).
+
+
+> A Promise is an object representing the eventual completion or failure of an asynchronous operation.
+
+In other words, a promise is an object that represents an asynchronous operation. A promise can have three distinct states:
+
+1. The promise is *pending*: It means that the final value (one of the following two) is not available yet.
+
+2. The promise is *fulfilled*: It means that the operation has completed and the final value is available, which generally is a successful operation. This state is sometimes also called resolved.
+
+3. The promise is *rejected*: It means that an error prevented the final value from being determined, which generally represents a failed operation.
+
+The first promise in our example is fulfilled, representing a successful axios.get('http://localhost:3001/notes')request. The second one, however, is rejected, and the console tells us the reason. It looks like we were trying to make an HTTP GET request to a non-existent address.
+
+If, and when, we want to access the result of the operation represented by the promise, we must register an event handler to the promise. This is achieved using the method `then`:
+
+```javascript
+const promise = axios.get('http://localhost:3001/notes')
+
+promise.then(response => {
+  console.log(response)
+})
+```
+
+![](https://fullstackopen.com/static/ea48db35e4b6b6ee75bd0b7795ea958c/5a190/17e.png)
+
+The JavaScript runtime environment calls the callback function registered by the `then` method providing it with a `response` object as a parameter. The `response` object contains all the essential data related to the response of an HTTP GET request, which would include the returned *data, status code*, and *headers*.
+
+⭐ Storing the promise object in a variable is generally unnecessary, and it's instead common to chain the then method call to the axios method call, so that it follows it directly:
+
+
+```javascript
+axios.get('http://localhost:3001/notes').then(response => {
+  const notes = response.data
+  console.log(notes)
+})
+
+//A more readable way to format chained method calls is to place each call on its own line:
+
+axios
+  .get('http://localhost:3001/notes')
+  .then(response => {
+    const notes = response.data
+    console.log(notes)
+  })
+```
+
+The data returned by the server is plain text, basically just one long string. The axios library is still able to parse the data into a JavaScript array, since the server has specified that the data format is *application/json; charset=utf-8* (see previous image) using the *content-type* header.
+
+```javascript
+import React from 'react'
+import ReactDOM from 'react-dom'
+import App from './App'
+
+import axios from 'axios'
+
+axios.get('http://localhost:3001/notes').then(response => {
+  const notes = response.data
+  ReactDOM.render(
+    <App notes={notes} />,
+    document.getElementById('root')
+  )
+})
+```
+
+This method could be acceptable in some circumstances, but it's somewhat problematic. Let's instead move the fetching of the data into the *App* component.
+
+## Effect-hooks
+
+> The Effect Hook lets you perform side effects in function components. Data fetching, setting up a subscription, and manually changing the DOM in React components are all examples of side effects.
+
+As such, effect hooks are precisely the right tool to use when fetching data from a server.
+
+Let's remove the fetching of data from index.js. Since we're gonna be retrieving the notes from the server, there is no longer a need to pass data as props to the App component.
+
+The *App* component changes as follows:
+
+```javascript
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
+import Note from './components/Note'
+
+const App = () => {
+  const [notes, setNotes] = useState([])
+  const [newNote, setNewNote] = useState('')
+  const [showAll, setShowAll] = useState(true)
+
+  useEffect(() => {
+    console.log('effect')
+    axios
+      .get('http://localhost:3001/notes')
+      .then(response => {
+        console.log('promise fulfilled')
+        setNotes(response.data)
+      })
+  }, [])
+  console.log('render', notes.length, 'notes')
+
+  // ...
+}
+```
+
+This is printed to the console
+
+```
+render 0 notes
+effect
+promise fulfilled
+render 3 notes
+```
+
+First the body of the function defining the component is executed and the component is rendered for the first time. At this point render 0 notes is printed, meaning data hasn't been fetched from the server yet.
+
+As always, a call to a state-updating function triggers the re-rendering of the component. As a result, render 3 notes is printed to the console, and the notes fetched from the server are rendered to the screen.
+
+Let's rewrite the code a bit differently.
+
+```javascript
+const hook = () => {
+  console.log('effect')
+  axios
+    .get('http://localhost:3001/notes')
+    .then(response => {
+      console.log('promise fulfilled')
+      setNotes(response.data)
+    })
+}
+
+useEffect(hook, [])
+```
+
+Now we can see more clearly that the function [useEffect](https://reactjs.org/docs/hooks-reference.html#useeffect) actually takes two parameters. The first is a function, the effect itself. According to the documentation:
+
+> By default, effects run after every completed render, but you can choose to fire it only when certain values have changed.
+
+So by default the effect is always run after the component has been rendered. In our case, however, we only want to execute the effect along with the first render.
+
+The second parameter of `useEffect` is used to [specify how often the effect is run](https://reactjs.org/docs/hooks-reference.html#conditionally-firing-an-effect). If the second parameter is an empty array `[]`, then the effect is only run along with the first render of the component.
+
+There are many possible use cases for an effect hook other than fetching data from the server. However, this use is sufficient for us, for now.
+
+Note that we could have also written the code of the effect function this way:
+
+```javascript
+useEffect(() => {
+  console.log('effect')
+
+  const eventHandler = response => {
+    console.log('promise fulfilled')
+    setNotes(response.data)
+  }
+
+  const promise = axios.get('http://localhost:3001/notes')
+  promise.then(eventHandler)
+}, [])
+```
+
+We still have a problem in our application. When adding new notes, they are not stored on the server.
+
+## The development runtime environment
+
+![](https://fullstackopen.com/static/650087bbee40291069025432f1408a29/d4713/18e.png)
+
+The JavaScript code making up our React application is run in the browser. The browser gets the JavaScript from the React dev server, which is the application that runs after running the command `npm start`. The dev-server transforms the JavaScript into a format understood by the browser. Among other things, it stitches together JavaScript from different files into one file.
+
+The React application running in the browser fetches the JSON formatted data from *json-server* running on port 3001 on the machine. The server we query the data from - *json-server* - gets its data from the file *db.json*.
+
+## **d. Altering data in server**
+
+## REST
+In REST terminology, we refer to individual data objects, such as the notes in our application, as *resources*.
+
+Resources are fetched from the server with HTTP GET requests. For instance, an HTTP GET request to the URL *notes/3* will return the note that has the id number 3. An HTTP GET request to the notes URL would return a list of all notes.
+
+Creating a new resource for storing a note is done by making an HTTP POST request to the *notes* URL according to the REST convention that the json-server adheres to. The data for the new note resource is sent in the *body* of the request.
+
+json-server requires all data to be sent in JSON format. What this means in practice is that the data must be a correctly formatted string, and that the request must contain the *Content-Type* request header with the value *application/json*.
+
+## Sending Data to the Server
+
+Let's make the following changes to the event handler responsible for creating a new note:
+
+```javascript
+addNote = event => {
+  event.preventDefault()
+  const noteObject = {
+    content: newNote,
+    date: new Date(),
+    important: Math.random() < 0.5,
+  }
+
+  axios
+    .post('http://localhost:3001/notes', noteObject)
+    .then(response => {
+      setNotes(notes.concat(response.data))
+      setNewNote('')
+    })
+}
+```
+
+We create a new object for the note but omit the *id* property, since it's better to let the server generate ids for our resources!
+
+Since the data we sent in the POST request was a JavaScript object, axios automatically knew to set the appropriate application/json value for the Content-Type header.
+
+❗ In the current version of our application the browser adds the creation date property to the note. Since the clock of the machine running the browser can be wrongly configured, it's much wiser to let the backend server generate this timestamp for us. This is in fact what we will do in the next part of the course.
+
+## Changing the Importance of Notes
+
+We make the following changes to the *Note* component:
+
+```javascript
+const Note = ({ note, toggleImportance }) => {
+  const label = note.important
+    ? 'make not important' : 'make important'
+
+  return (
+    <li>
+      {note.content} 
+      <button onClick={toggleImportance}>{label}</button>
+    </li>
+  )
+}
+```
+
+We add a button to the component and assign its event handler as the `toggleImportance` function passed in the component's props.
+
+The *App* component defines an initial version of the `toggleImportanceOf` event handler function and passes it to every *Note* component:
+
+```javascript
+const App = () => {
+  const [notes, setNotes] = useState([]) 
+  const [newNote, setNewNote] = useState('')
+  const [showAll, setShowAll] = useState(true)
+
+  // ...
+
+  const toggleImportanceOf = (id) => {
+    console.log('importance of ' + id + ' needs to be toggled')
+  }
+
+  // ...
+
+  return (
+    <div>
+      <h1>Notes</h1>
+      <div>
+        <button onClick={() => setShowAll(!showAll)}>
+          show {showAll ? 'important' : 'all' }
+        </button>
+      </div>      
+      <ul>
+        {notesToShow.map((note, i) => 
+          <Note
+            key={i}
+            note={note} 
+            toggleImportance={() => toggleImportanceOf(note.id)}
+          />
+        )}
+      </ul>
+      // ...
+    </div>
+  )
+}
+```
+
+A short reminder here. The string printed by the event handler is defined in Java-like manner by adding the strings:
+
+```javascript
+console.log('importance of ' + id + ' needs to be toggled')
+
+//The template string syntax added in ES6 can be used to write similar strings in a much nicer way:
+console.log(`importance of ${id} needs to be toggled`)
+```
+
+Note that the quotation marks used in template strings differ from the quotation marks used in regular JavaScript strings.
+
+Individual notes stored in the json-server backend can be modified in two different ways by making HTTP requests to the note's unique URL. 
+* We can either *replace* the entire note with an HTTP PUT request, or
+* only change some of the note's properties with an HTTP PATCH request.
+
+The final form of the event handler function is the following:
+
+```javascript
+const toggleImportanceOf = id => {
+  const url = `http://localhost:3001/notes/${id}`
+  const note = notes.find(n => n.id === id)
+  const changedNote = { ...note, important: !note.important }
+
+  axios.put(url, changedNote).then(response => {
+    setNotes(notes.map(note => note.id !== id ? note : response.data))
+  })
+}
+```
+
+The first line defines the unique url for each note resource based on its id.
+
+The array find method is used to find the note we want to modify, and we then assign it to the note variable.
+
+After this we create a new object that is an exact copy of the old note, apart from the important property.
+
+The code for creating the new object uses the object spread syntax.
+
+It's also worth noting that the new object `changedNote` is only a so-called [shallow copy](https://en.wikipedia.org/wiki/Object_copying#Shallow_copy), meaning that the values of the new object are the same as the values of the old object. If the values of the old object were objects themselves, then the copied values in new object would reference the same objects that were in the old object.
+
+## Extracting Communication with the Backend into a Separate Module
+
+Let's create a *src/services* directory and add a file there called *notes.js*:
+
+```javascript
+import axios from 'axios'
+const baseUrl = 'http://localhost:3001/notes'
+
+const getAll = () => {
+  return axios.get(baseUrl)
+}
+
+const create = newObject => {
+  return axios.post(baseUrl, newObject)
+}
+
+const update = (id, newObject) => {
+  return axios.put(`${baseUrl}/${id}`, newObject)
+}
+
+export default { 
+  getAll: getAll, 
+  create: create, 
+  update: update 
+}
+```
+
+The module returns an object that has three functions (*getAll, create*, and *update*) as its properties that deal with notes. The functions directly return the promises returned by the axios methods.
+
+The App component uses `import` to get access to the module:
+
+```javascript
+import noteService from './services/notes'
+```
+
+The functions of the module can be used directly with the imported variable noteService as follows:
+
+```javascript
+const App = () => {
+  // ...
+
+  useEffect(() => {
+    noteService
+      .getAll()
+      .then(response => {
+        setNotes(response.data)
+      })
+  }, [])
+
+  const toggleImportanceOf = id => {
+    const note = notes.find(n => n.id === id)
+    const changedNote = { ...note, important: !note.important }
+
+    noteService
+      .update(id, changedNote)
+      .then(response => {
+        setNotes(notes.map(note => note.id !== id ? note : response.data))
+      })
+  }
+
+  const addNote = (event) => {
+    event.preventDefault()
+    const noteObject = {
+      content: newNote,
+      date: new Date().toISOString(),
+      important: Math.random() > 0.5
+    }
+
+    noteService
+      .create(noteObject)
+      .then(response => {
+        setNotes(notes.concat(response.data))
+        setNewNote('')
+      })
+  }
+
+  // ...
+}
+
+export default App
+```
+
+We could take our implementation a step further.
+
+The App component only uses the response.data property of the response object.
+
+The module would be much nicer to use if, instead of the entire HTTP response, we would only get the response data. Using the module would then look like this:
+
+```javascript
+noteService
+  .getAll()
+  .then(initialNotes => {
+    setNotes(initialNotes)
+  })
+```
+
+We no longer return the promise returned by axios directly. Instead, we assign the promise to the `request` variable and call its `then` method:
+
+```javascript
+const getAll = () => {
+  const request = axios.get(baseUrl)
+  return request.then(response => response.data)
+}
+```
+
+⭐ The modified `getAll` function still returns a promise, as the `then` method of a promise also [returns a promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/then).
+
+After defining the parameter of the `then` method to directly return *response.data*, we have gotten the `getAll` function to work like we wanted it to. When the HTTP request is successful, the promise returns the data sent back in the response from the backend.
+
+This is all quite complicated and attempting to explain it may just make it harder to understand. The internet is full of material discussing the topic, such as [this](https://javascript.info/promise-chaining) one.
+
+Promises are central to modern JavaScript development and it is highly recommended to invest a reasonable amount of time into understanding them.
+
+## Cleaner Syntax for Defining Object Literals
+
+The module exports the following, rather peculiar looking, object:
+
+```javascript
+{ 
+  getAll: getAll, 
+  create: create, 
+  update: update 
+}
+```
+
+The labels to the left of the colon in the object definition are the *keys* of the object, whereas the ones to the right of it are *variables* that are defined inside of the module.
+
+Since the names of the keys and the assigned variables are the same, we can write the object definition with more compact syntax:
+
+```javascript
+export default { getAll, create, update }
+```
+
+In defining the object using this shorter notation, we make use of a [new feature](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer#property_definitions) that was introduced to JavaScript through ES6, enabling a slightly more compact way of defining objects using variables.
+
+
+```javascript
+const name = 'Leevi'
+const age = 0
+```
+
+In older versions of JavaScript we had to define an object like this:
+
+```javascript
+const person = {
+  name: name,
+  age: age
+}
+```
+
+However, since both the property fields and the variable names in the object are the same, it's enough to simply write the following in ES6 JavaScript:
+
+```javascript
+const person = { name, age }
+```
+
+The result is identical for both expressions. They both create an object with a *name* property with the value *Leevi* and an *age* property with the value *0*.
+
+## Promises and Errors
+
+If our application allowed users to delete notes, we could end up in a situation where a user tries to change the importance of a note that has already been deleted from the system.
+
+Let's simulate this situation by making the getAll function of the note service return a "hardcoded" note that does not actually exist in the backend server:
+
+```javascript
+const getAll = () => {
+  const request = axios.get(baseUrl)
+  const nonExisting = {
+    id: 10000,
+    content: 'This note is not saved to server',
+    date: '2019-05-30T17:30:31.098Z',
+    important: true,
+  }
+  return request.then(response => response.data.concat(nonExisting))
+}
+```
+
+When we try to change the importance of the hardcoded note, we see the following error message in the console. The error says that the backend server responded to our HTTP PUT request with a status code 404 *not found*.
+
+![](https://fullstackopen.com/static/fb3939d7196db5c1bb722bcf8b5ed0ac/5a190/23e.png)
+
+We had previously mentioned that a promise can be in one of three different states. When an HTTP request fails, the associated promise is rejected. Our current code does not handle this rejection in any way.
+
+The rejection of a promise is [handled](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises) by providing the `then` method with a second callback function, which is called in the situation where the promise is rejected.
+
+The more common way of adding a handler for rejected promises is to use the catch method.
+
+```javascript
+axios
+  .get('http://example.com/probably_will_fail')
+  .then(response => {
+    console.log('success!')
+  })
+  .catch(error => {
+    console.log('fail')
+  })
+```
+
+If the request fails, the event handler registered with the `catch` method gets called.
+
+The `catch` method is often utilized by placing it deeper within the promise chain.
+
+When our application makes an HTTP request, we are in fact creating a [promise chain](https://javascript.info/promise-chaining):
+
+```javascript
+axios
+  .put(`${baseUrl}/${id}`, newObject)
+  .then(response => response.data)
+  .then(changedNote => {
+    // ...
+  })
+  .catch(error => {
+    console.log('fail')
+  })
+```
+
+The `catch` method can be used to define a handler function at the end of a promise chain, which is called once any promise in the chain throws an error and the promise becomes *rejected*.
+
+
+```javascript
+const toggleImportanceOf = id => {
+  const note = notes.find(n => n.id === id)
+  const changedNote = { ...note, important: !note.important }
+
+  noteService
+    .update(id, changedNote).then(returnedNote => {
+      setNotes(notes.map(note => note.id !== id ? note : returnedNote))
+    })
+    .catch(error => {
+      alert(
+        `the note '${note.content}' was already deleted from server`
+      )
+      setNotes(notes.filter(n => n.id !== id))
+    })
+}
+```
+
+The error message is displayed to the user with the trusty old alert dialog popup, and the deleted note gets filtered out from the state.
+
+It's probably not a good idea to use alert in more serious React applications. We will soon learn a more advanced way of displaying messages and notifications to users. There are situations, however, where a simple, battle-tested method like `alert` can function as a starting point.
+
+## **e.Adding styles to React app**
+
+At first, we will add CSS to our application the old-school way; in a single file without using a CSS preprocessor (although this is not entirely true as we will learn later on).
+
+Let's add a new *index.css* file under the src directory and then add it to the application by importing it in the *index.js* file:
+
+```javascript
+import './index.css'
+```
+
+Let's add the following CSS rule to the *index.css* file:
+
+```css
+h1 {
+  color: green;
+}
+```
+
+CSS rules comprise of *selectors* and *declarations*. The selector defines which elements the rule should be applied to. The selector above is *h1*, which will match all of the *h1* header tags in our application.
+
+The declaration sets the `color` property to the value *green*.
+
+One CSS rule can contain an arbitrary number of properties. Let's modify the previous rule to make the text cursive, by defining the font style as *italic*:
+
+```css
+h1 {
+  color: green;
+  font-style: italic;
+}
+```
+There are many ways of matching elements by using [different types of CSS selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors).
+
+
+If we wanted to target, let's say, each one of the notes with our styles, we could use the selector *li*, as all of the notes are wrapped inside *li* tags:
+
+```css
+li {
+  color: grey;
+  padding-top: 3px;
+  font-size: 15px;
+}
+```
+
+⚠️ Using element types for defining CSS rules is slightly problematic. If our application contained other *li* tags, the same style rule would also be applied to them.
+
+If we want to apply our style specifically to notes, then it is better to use [class selectors](https://developer.mozilla.org/en-US/docs/Web/CSS/Class_selectors).
+
+In regular HTML, classes are defined as the value of the *class* attribute:
+
+```html
+<li class="note">some text...</li>
+```
+
+In React we have to use the [className](https://reactjs.org/docs/dom-elements.html#classname) attribute instead of the class attribute. With this in mind, let's make the following changes to our *Note* component:
+
+```javascript
+<li className="note">some text...</li>
+```
+
+Class selectors are defined with the `.classname` syntax:
+
+```css
+.note {
+  color: grey;
+  padding-top: 5px;
+  font-size: 15px;
+}
+```
+
+## Improved error message
+
+We previously implemented the error message that was displayed when the user tried to toggle the importance of a deleted note with the `alert` method. Let's implement the error message as its own React component.
+
+```javascript
+const Notification = ({ message }) => {
+  if (message === null) {
+    return null
+  }
+
+  return (
+    <div className='error'>
+      {message}
+    </div>
+  )
+}
+```
+
+If the value of the `message` prop is `null`, then nothing is rendered to the screen, and in other cases the message gets rendered inside of a div element.
+
+Let's add a new piece of state called *errorMessage* to the *App* component.
+
+
+```javascript
+//...
+
+const [errorMessage, setErrorMessage] = useState('some error happened...')
+
+//...
+
+return (
+  <Notification message={errorMessage} />
+)
+
+//...
+```
+
+Then let's add a style rule that suits an error message:
+
+```css
+.error {
+  color: red;
+  background: lightgrey;
+  font-size: 20px;
+  border-style: solid;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+```
+
+Now we are ready to add the logic for displaying the error message. Let's change the `toggleImportanceOf` function in the following way:
+
+```javascript
+const toggleImportanceOf = id => {
+    const note = notes.find(n => n.id === id)
+    const changedNote = { ...note, important: !note.important }
+
+    noteService
+      .update(changedNote).then(returnedNote => {
+        setNotes(notes.map(note => note.id !== id ? note : returnedNote))
+      })
+      .catch(error => {
+        setErrorMessage(
+          `Note '${note.content}' was already removed from server`
+        )
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
+        setNotes(notes.filter(n => n.id !== id))
+      })
+  }
+```
+
+When the error occurs we add a descriptive error message to the `errorMessage` state. At the same time we start a timer, that will set the `errorMessage` state to `null` after five seconds.
+
+![](https://fullstackopen.com/static/dc474c748d9027b4fbc26a92c867ee99/5a190/26e.png)
+
+## Inline styles
+
+React also makes it possible to write styles directly in the code as so-called [inline styles](https://react-cn.github.io/react/tips/inline-styles.html).
+
+ Any React component or element can be provided with a set of CSS properties as a JavaScript object through the [style](https://reactjs.org/docs/dom-elements.html#style) attribute.
+
+ CSS rules are defined slightly differently in JavaScript than in normal CSS files. Let's say that we wanted to give some element the color green and italic font that's 16 pixels in size. In CSS, it would look like this:
+
+ ```css
+{
+  color: green;
+  font-style: italic;
+  font-size: 16px;
+}
+```
+
+But as a React inline style object it would look like this:
+
+```javascript
+{
+  color: 'green',
+  fontStyle: 'italic',
+  fontSize: 16
+}
+```
+
+Every CSS property is defined as a separate property of the JavaScript object. Numeric values for pixels can be simply defined as integers. One of the major differences compared to regular CSS, is that hyphenated (kebab case) CSS properties are written in camelCase.
+
+Next, we could add a "bottom block" to our application by creating a Footer component and define the following inline styles for it:
+
+```javascript
+const Footer = () => {
+  const footerStyle = {
+    color: 'green',
+    fontStyle: 'italic',
+    fontSize: 16
+  }
+  return (
+    <div style={footerStyle}>
+      <br />
+      <em>Note app, Department of Computer Science, University of Helsinki 2021</em>
+    </div>
+  )
+}
+
+//...
+
+return (
+  <Footer />
+)
+
+//...
+
+```
+
+Inline styles come with certain limitations. For instance, so-called [pseudo-classes](https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-classes) can't be used straightforwardly.
+
+Traditionally, it has been considered best practice to entirely separate CSS from the content (HTML) and functionality (JavaScript). According to this older school of thought, the goal was to write CSS, HTML, and JavaScript into their separate files.
+
+The philosophy of React is, in fact, the polar opposite of this. Since the separation of CSS, HTML, and JavaScript into separate files did not seem to scale well in larger applications, React bases the division of the application along the lines of its logical functional entities.
+
+⭐ The structural units that make up the application's functional entities are React components. A React component defines the HTML for structuring the content, the JavaScript functions for determining functionality, and also the component's styling; all in one place. This is to create individual components that are as independent and reusable as possible.
