@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import PersonForm from './component/PersonForm'
 import Persons from './component/Persons'
 import Filter from './component/Filter'
-import axios from 'axios'
+import personServices from './services/persons'
 
 const App = () => {
   const [persons, setPersons] = useState([]) 
@@ -11,11 +11,11 @@ const App = () => {
   const [newFilter, setNewFilter] = useState('')
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
+    personServices
+      .getAll()
+      .then(initialPersons => {
         console.log('promise fulfilled')
-        setPersons(response.data)
+        setPersons(initialPersons)
       })
   }, [])
 
@@ -24,19 +24,35 @@ const App = () => {
     event.preventDefault()
 
     if (names.includes(newName)) {
-      alert(`${newName} is already added to phonebook`)
+      const num = names.indexOf(newName)
+      if(window.confirm(`${newName} is already added to phonebook, replace the old number with a new one?`)) {
+        const person = persons[num]
+        const changedPerson = { ...person, number: newPhone}
+        // console.log(persons[num].id, changedPerson)
+        personServices
+          .update(persons[num].id, changedPerson)
+          .then(returnedPerson => {
+            setPersons(persons.map(person => person.id != persons[num].id ? person : returnedPerson))
+          })
+      }
     } else {
       // console.log(event.target)
       const newObject = { 
         name: newName,
         number: newPhone,
-        id: persons.length + 1
+        // id: persons.length + 1
       }
 
-      setPersons(persons.concat(newObject))
-      setNewName('')
-      setNewPhone('')
+      personServices
+        .create(newObject)
+        .then(returnedPerson => {
+          // console.log(response)
+          setPersons(persons.concat(returnedPerson))
+          
+        })
     }
+    setNewName('')
+    setNewPhone('')
   }
 
   const handleFilter = (event) => {
@@ -53,6 +69,27 @@ const App = () => {
     console.log(event.target)
     setNewPhone(event.target.value)
   }
+
+  const handleDeleteClick = (name, id) => {
+    const person = persons.find(p => p.id === id)
+    const changePersons = persons.filter(p => {
+      // console.log(p.id, typeof p.id, id, typeof id)
+      return p.id !== id
+    })
+    if (window.confirm(`Delete ${name} ?`)) {
+      personServices
+      .remove(id)
+      .then(returnedPersons => {
+        console.log(returnedPersons)
+        setPersons(changePersons)
+      })
+    }    
+  }
+
+  const personsToShow = persons.filter(person => 
+    person.name.toLowerCase().includes(newFilter.toLowerCase())
+  )
+  console.log(personsToShow)
 
   return (
     <div>
@@ -72,7 +109,13 @@ const App = () => {
 
       <h3>Numbers</h3>
 
-      <Persons persons={persons} filter={newFilter} />
+      {personsToShow.map((person, i) => 
+        <Persons
+          key={i}
+          person={person}
+          handleClick={() => handleDeleteClick(person.name, person.id)} // function or function reference, not function call
+        />
+      )}
     </div>
   )
 }
