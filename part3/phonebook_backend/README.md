@@ -1,4 +1,4 @@
-# Exercises 3.1.-3.6.
+# Exercises 3.1.-3.6. // Exercises 3.7.-3.8.
 
 Because this is not a frontend project and we are not working with React, the application is not created with create-react-app. You initialize this project with the `npm init` command that was demonstrated earlier in this part of the material.
 
@@ -74,3 +74,25 @@ Respond to requests like these with the appropriate status code, and also send b
 ```
 { error: 'name must be unique' }
 ```
+
+## 3.7: Phonebook backend step7
+
+Add the [morgan](https://github.com/expressjs/morgan) middleware to your application for logging. Configure it to log messages to your console based on the tiny configuration.
+
+The documentation for Morgan is not the best, and you may have to spend some time figuring out how to configure it correctly. However, most documentation in the world falls under the same category, so it's good to learn to decipher and interpret cryptic documentation in any case.
+
+Morgan is installed just like all other libraries with the `npm install` command. Taking morgan into use happens the same way as configuring any other middleware by using the `app.use` command.
+
+## 3.8*: Phonebook backend step8
+Configure morgan so that it also shows the data sent in HTTP POST requests:
+
+![](https://fullstackopen.com/static/4ed4b48465d48df517158501c0be187e/5a190/24.png)
+
+Note that logging data even in the console can be dangerous since it can contain sensitive data and may violate local privacy law (e.g. GDPR in EU) or business-standard. In this exercise, you don't have to worry about privacy issues, but in practice, try not to log any sensitive data.
+
+This exercise can be quite challenging, even though the solution does not require a lot of code.
+
+This exercise can be completed in a few different ways. One of the possible solutions utilizes these two techniques:
+
+* [creating new tokens](https://github.com/expressjs/morgan#creating-new-tokens)
+* [JSON.stringify](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify)

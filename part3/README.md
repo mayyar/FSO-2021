@@ -464,6 +464,57 @@ Math.max(...notes.map(n => n.id))
 
 `notes.map(n => n.id)` creates a new array that contains all the ids of the notes. Math.max returns the maximum value of the numbers that are passed to it. However, `notes.map(n => n.id)` is an array so it can't directly be given as a parameter to Math.max. ⭐ The array can be transformed into individual numbers by using the "three dot" [spread](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Spread_syntax) syntax `...`.
 
+## About HTTP request types
+
+[The HTTP standard](https://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html) talks about two properties related to request types, safety and idempotence.
+
+The HTTP GET request should be safe:
+
+> In particular, the convention has been established that the GET and HEAD methods SHOULD NOT have the significance of taking an action other than retrieval. These methods ought to be considered "safe".
+
+Safety means that the executing request must not cause any *side effects* in the server. By side-effects we mean that the state of the database must not change as a result of the request, and the response must only return data that already exists on the server.
+
+All HTTP requests except POST should be idempotent:
+
+> Methods can also have the property of "idempotence" in that (aside from error or expiration issues) the side-effects of N > 0 identical requests is the same as for a single request. The methods GET, HEAD, PUT and DELETE share this property
+
+POST is the only HTTP request type that is neither safe nor idempotent. If we send 5 different HTTP POST requests to /api/notes with a body of {content: "many same", important: true}, the resulting 5 notes on the server will all have the same content.
+
+## Middleware
+
+Middleware are functions that can be used for handling `request` and `response` objects.
+
+The json-parser we used earlier takes the raw data from the `requests` that's stored in the request object, parses it into a JavaScript object and assigns it to the `request` object as a new property *body*.
+
+Middleware is a function that receives three parameters:
+
+```js
+const requestLogger = (request, response, next) => {
+  console.log('Method:', request.method)
+  console.log('Path:  ', request.path)
+  console.log('Body:  ', request.body)
+  console.log('---')
+  next()
+}
+```
+
+Middleware are taken into use like this:
+
+```js
+app.use(requestLogger)
+```
+
+Middleware functions have to be taken into use before routes if we want them to be executed before the route event handlers are called.There are also situations where we want to define middleware functions after routes. In practice, this means that we are defining middleware functions that are only called if no route handles the HTTP request.
+
+```js
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
+```
+
+
 ## **b. Deploying app to internet**
 
 Next let's connect the frontend we made in part 2 to our own backend.
