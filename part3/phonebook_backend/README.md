@@ -1,4 +1,4 @@
-# Exercises 3.1.-3.6. // Exercises 3.7.-3.8. // Exercises 3.9.-3.11.
+# Exercises 3.1.-3.6. // Exercises 3.7.-3.8. // Exercises 3.9.-3.11. // Exercise 3.12.
 
 Website: https://radiant-cove-84721.herokuapp.com/
 
@@ -119,3 +119,52 @@ Generate a production build of your frontend, and add it to the internet applica
 ❗ Make sure the directory build is not gitignored
 
 Also make sure that the frontend still works locally.
+
+## Exercise 3.12.
+
+3.12: Command-line database
+Create a cloud-based MongoDB database for the phonebook application with MongoDB Atlas.
+
+Create a mongo.js file in the project directory, that can be used for adding entries to the phonebook, and for listing all of the existing entries in the phonebook.
+
+❗ Do not include the password in the file that you commit and push to GitHub!
+
+The application should work as follows. You use the program by passing three command-line arguments (the first is the password), e.g.:
+
+```
+node mongo.js yourpassword Anna 040-1234556
+```
+
+As a result, the application will print:
+
+```
+added Anna number 040-1234556 to phonebook
+```
+
+The new entry to the phonebook will be saved to the database. Notice that if the name contains whitespace characters, it must be enclosed in quotes:
+
+```
+node mongo.js yourpassword "Arto Vihavainen" 045-1232456
+```
+
+If the password is the only parameter given to the program, meaning that it is invoked like this:
+
+```
+node mongo.js yourpassword
+```
+
+Then the program should display all of the entries in the phonebook:
+
+```
+phonebook:
+Anna 040-1234556
+Arto Vihavainen 045-1232456
+Ada Lovelace 040-1231236
+```
+
+You can get the command-line parameters from the [process.argv](https://nodejs.org/docs/latest-v8.x/api/process.html#process_process_argv) variable.
+
+❗ **do not close the connection in the wrong place.**
+
+The correct place for closing the database connection is at the end of the callback function.
+
