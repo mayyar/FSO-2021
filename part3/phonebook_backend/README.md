@@ -1,4 +1,6 @@
-# Exercises 3.1.-3.6. // Exercises 3.7.-3.8.
+# Exercises 3.1.-3.6. // Exercises 3.7.-3.8. // Exercises 3.9.-3.11.
+
+Website: https://radiant-cove-84721.herokuapp.com/
 
 Because this is not a frontend project and we are not working with React, the application is not created with create-react-app. You initialize this project with the `npm init` command that was demonstrated earlier in this part of the material.
 
@@ -96,3 +98,24 @@ This exercise can be completed in a few different ways. One of the possible solu
 
 * [creating new tokens](https://github.com/expressjs/morgan#creating-new-tokens)
 * [JSON.stringify](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify)
+
+## 3.9 phonebook backend step9
+Make the backend work with the frontend from the previous part. Do not implement the functionality for making changes to the phone numbers yet, that will be implemented in exercise 3.17.
+
+You will probably have to do some small changes to the frontend, at least to the URLs for the backend. Remember to keep the developer console open in your browser. If some HTTP requests fail, you should check from the *Network-tab* what is going on. Keep an eye on the backend's console as well. If you did not do the previous exercise, it is worth it to print the request data or *request.body* to the console in the event handler responsible for POST requests.
+
+## 3.10 phonebook backend step10
+Deploy the backend to the internet, for example to Heroku.
+
+❗ If for some reason you cannot [install](https://devcenter.heroku.com/articles/heroku-cli) Heroku to your computer, you can use the command [npx heroku](https://www.npmjs.com/package/heroku).
+
+Test the deployed backend with a browser and Postman or VS Code REST client to ensure it works.
+
+PRO TIP: When you deploy your application to Heroku, it is worth it to at least in the beginning keep an eye on the logs of the heroku application **AT ALL TIMES** with the command `heroku logs -t`.
+
+## 3.11 phonebook full stack
+Generate a production build of your frontend, and add it to the internet application using the method introduced in this part.
+
+❗ Make sure the directory build is not gitignored
+
+Also make sure that the frontend still works locally.
