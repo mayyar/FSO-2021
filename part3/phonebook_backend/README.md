@@ -1,4 +1,4 @@
-# Exercises 3.1.-3.6. // Exercises 3.7.-3.8. // Exercises 3.9.-3.11. // Exercise 3.12.
+# Exercises 3.1.-3.6.
 
 Website: https://radiant-cove-84721.herokuapp.com/
 
@@ -76,6 +76,7 @@ Respond to requests like these with the appropriate status code, and also send b
 ```
 { error: 'name must be unique' }
 ```
+# Exercises 3.7.-3.8.
 
 ## 3.7: Phonebook backend step7
 
@@ -99,6 +100,8 @@ This exercise can be completed in a few different ways. One of the possible solu
 * [creating new tokens](https://github.com/expressjs/morgan#creating-new-tokens)
 * [JSON.stringify](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify)
 
+# Exercises 3.9.-3.11.
+
 ## 3.9 phonebook backend step9
 Make the backend work with the frontend from the previous part. Do not implement the functionality for making changes to the phone numbers yet, that will be implemented in exercise 3.17.
 
@@ -120,9 +123,9 @@ Generate a production build of your frontend, and add it to the internet applica
 
 Also make sure that the frontend still works locally.
 
-## Exercise 3.12.
+# Exercise 3.12.
 
-3.12: Command-line database
+## 3.12: Command-line database
 Create a cloud-based MongoDB database for the phonebook application with MongoDB Atlas.
 
 Create a mongo.js file in the project directory, that can be used for adding entries to the phonebook, and for listing all of the existing entries in the phonebook.
@@ -168,3 +171,18 @@ You can get the command-line parameters from the [process.argv](https://nodejs.o
 
 The correct place for closing the database connection is at the end of the callback function.
 
+# Exercises 3.13.-3.14.
+
+The following exercises are pretty straightforward, but if your frontend stops working with the backend, then finding and fixing the bugs can be quite interesting.
+
+## 3.13: Phonebook database, step1
+Change the fetching of all phonebook entries so that the data is fetched from the database.
+
+Verify that the frontend works after the changes have been made.
+
+In the following exercises, write all Mongoose-specific code into its own module, just like we did in the chapter [Database configuration into its own module](https://fullstackopen.com/en/part3/saving_data_to_mongo_db#database-configuration-into-its-own-module).
+
+## 3.14: Phonebook database, step2
+Change the backend so that new numbers are saved to the database. Verify that your frontend still works after the changes.
+
+At this point, you can choose to simply allow users to create all phonebook entries. At this stage, the phonebook can have multiple entries for a person with the same name.
