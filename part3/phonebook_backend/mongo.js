@@ -29,19 +29,19 @@ if (process.argv.length === 5) {
       console.log(`added ${name} number ${number} to phonebook`)
       mongoose.connection.close()
     })
-    
+
 } else if (process.argv.length === 3) {
   Person
     .find({})
     .then(persons => {
-      console.log(`phonebook:`)
+      console.log('phonebook:')
       persons.forEach(person => {
         console.log(`${person.name} ${person.number}`)
       })
       mongoose.connection.close()
     })
 } else {
-  console.log(`No command`)
+  console.log('No command')
 }
 
 
