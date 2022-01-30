@@ -3,8 +3,6 @@ const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 const Person = require('./model/person')
-const { resourceUsage, nextTick } = require('process')
-const { response, request } = require('express')
 
 morgan.token('data', (request, response) => JSON.stringify(request.body))
 
