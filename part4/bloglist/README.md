@@ -138,3 +138,43 @@ Use async/await.
 The application mostly needs to update the amount of likes for a blog post. You can implement this functionality the same way that we implemented updating notes in [part 3](https://fullstackopen.com/en/part3/saving_data_to_mongo_db#other-operations).
 
 Feel free to implement tests for the functionality if you want to. Otherwise verify that the functionality works with Postman or some other tool.
+
+# Exercises 4.15. 4.17. - 4.19.
+
+In the next exercises, basics of user management will be implemented for the Bloglist application. The safest way is to follow the story from part 4 chapter User administration to the chapter Token-based authentication. You can of course also use your creativity.
+
+**One more warning:** If you notice you are mixing async/await and `then` calls, it is 99% certain you are doing something wrong. Use either or, never both.
+
+## 4.15: bloglist expansion, step3
+
+Implement a way to create new users by doing a HTTP POST-request to address api/users. Users have _username, password and name_.
+
+Do not save passwords to the database as clear text, but use the bcrypt library like we did in part 4 chapter Creating new users.
+
+Implement a way to see the details of all users by doing a suitable HTTP request.
+
+List of users can for example, look as follows:
+
+![](https://fullstackopen.com/static/b59bda1bd7e5987a5c805332d509e516/5a190/22.png)
+
+## 4.17: bloglist expansion, step5
+
+Expand blogs so that each blog contains information on the creator of the blog.
+
+Modify adding new blogs so that when a new blog is created, any user from the database is designated as its creator (for example the one found first). Implement this according to part 4 chapter populate. Which user is designated as the creator does not matter just yet. The functionality is finished in exercise 4.19.
+
+Modify listing all blogs so that the creator's user information is displayed with the blog:
+
+![](https://fullstackopen.com/static/199682ad74f50747c90997a967856ffa/5a190/23e.png)
+
+and listing all users also displays the blogs created by each user:
+
+![](https://fullstackopen.com/static/ac9967c89785b33440e9b1b4e87c17e5/5a190/24e.png)
+
+## 4.18: bloglist expansion, step6
+
+Implement token-based authentication according to part 4 chapter Token authentication.
+
+## 4.19: bloglist expansion, step7
+
+Modify adding new blogs so that it is only possible if a valid token is sent with the HTTP POST request. The user identified by the token is designated as the creator of the blog.
